@@ -14,20 +14,21 @@ import { CollectionViewer, DataSource } from "@angular/cdk/collections";
 export class RecordsDataSource implements DataSource<Record> {
   private recordsSubject = new BehaviorSubject<Record[]>([]);
   private loadingSubject = new BehaviorSubject<boolean>(false);
+  private savedState;
   public loading$ = this.loadingSubject.asObservable();
 
   constructor(private recordsService: RecordsService) {}
 
-  connect(collectionViewer: CollectionViewer): Observable<Record[]> {
+  public connect(collectionViewer: CollectionViewer): Observable<Record[]> {
     return this.recordsSubject.asObservable();
   }
 
-  disconnect(collectionViewer: CollectionViewer): void {
+  public disconnect(collectionViewer: CollectionViewer): void {
     this.recordsSubject.complete();
     this.loadingSubject.complete();
   }
 
-  getAllRecords(sortDirection = "ASC", sortBy = "id") {
+  public async getAllRecords(sortDirection = "ASC", sortBy = "id") {
     this.loadingSubject.next(true);
 
     this.recordsService
@@ -36,10 +37,16 @@ export class RecordsDataSource implements DataSource<Record> {
         catchError(() => of([])),
         finalize(() => this.loadingSubject.next(false))
       )
-      .subscribe((success) => this.recordsSubject.next(success["data"]));
+      .subscribe((success) => {
+        let creationField = this.recordsSubject.value.find((record)=>{return !record.id});
+        if (creationField) {
+          success["data"].push(creationField);
+        }
+        this.recordsSubject.next(success["data"]);
+      });
   }
 
-  addNewRecord(record: Record) {
+  public addNewRecord(record: Record) {
     this.loadingSubject.next(true);
     this.recordsService
       .addRecord(record)
@@ -52,7 +59,7 @@ export class RecordsDataSource implements DataSource<Record> {
       });
   }
 
-  deleteRecord(recordId: number) {
+  public deleteRecord(recordId: number) {
     this.loadingSubject.next(true);
     this.recordsService
       .deleteRecord(recordId)
@@ -65,13 +72,42 @@ export class RecordsDataSource implements DataSource<Record> {
       });
   }
 
-  editRecord(recordId: number, newRecord: Record) {
+  public editRecord(recordId: number, newRecord: Record) {
     let editedFields = this.getEditedFields(recordId, newRecord);
     if (editedFields.length < 1) {
       return;
     }
 
     this.sendPatchRequestsAndUpdateRecordLocally(editedFields, recordId, newRecord);
+  }
+
+  public addCreationField(initialValues: Record) {
+    this.recordsSubject.value.push(initialValues);
+    this.recordsSubject.next(this.recordsSubject.value);
+  }
+
+  public removeCreationField() {
+    this.recordsSubject.next(this.recordsSubject.value.filter((record) => {
+      return record.id;
+     }));
+  }
+
+  public saveCurrentState() {
+   this.savedState = this.cloneDeep(this.recordsSubject.value);
+  }
+
+  public loadLastSavedState() {
+    if (this.savedState) {
+      this.recordsSubject.next(this.savedState);
+    }
+  }
+
+  public wipeSavedState() {
+    this.savedState = null;
+  }
+
+  private cloneDeep(object) {
+    return JSON.parse(JSON.stringify(object));
   }
 
   private async sendPatchRequestsAndUpdateRecordLocally(
@@ -127,7 +163,7 @@ export class RecordsDataSource implements DataSource<Record> {
 
   private getEditedFields(recordId: number, newRecord: Record): String[] {
     let result: String[] = [];
-    let currentRecord = this.getLocalRecord(recordId);
+    let currentRecord = this.getLocalRecordFromSavedState(recordId);
     if (currentRecord.name != newRecord.name) {
       result.push("name");
     }
@@ -139,5 +175,9 @@ export class RecordsDataSource implements DataSource<Record> {
 
   private getLocalRecord(id: number) {
     return this.recordsSubject.value.find((record) => record.id == id);
+  }
+
+  private getLocalRecordFromSavedState(id: number) {
+    return this.savedState.find((record) => record.id == id);
   }
 }

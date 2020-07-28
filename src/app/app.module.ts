@@ -9,6 +9,8 @@ import { MatTableModule } from "@angular/material/table"
 import { MatSortModule } from "@angular/material/sort"
 import { MatProgressSpinnerModule } from "@angular/material/progress-spinner"
 import { HttpClientModule } from '@angular/common/http';
+import { MatButtonModule } from '@angular/material/button';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 
 @NgModule({
@@ -18,11 +20,14 @@ import { HttpClientModule } from '@angular/common/http';
   ],
   imports: [
     BrowserModule,
+    FormsModule,
+    ReactiveFormsModule,
     BrowserAnimationsModule,
     MatInputModule,
     MatTableModule,
     MatSortModule,
     MatProgressSpinnerModule,
+    MatButtonModule,
     HttpClientModule
   ],
   providers: [],
