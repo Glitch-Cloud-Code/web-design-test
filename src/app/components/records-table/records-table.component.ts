@@ -1,16 +1,19 @@
-import { Component, OnInit, AfterViewInit, ViewChild } from "@angular/core";
+import { Component, OnInit, AfterViewInit, ViewChild, OnDestroy, HostListener } from "@angular/core";
 import { RecordsService } from "src/app/services/records.service";
 import { RecordsDataSource } from "src/app/data-sources/records-datasource";
 import { Record } from "../../interfaces/record";
 import { MatSort } from "@angular/material/sort";
 import { FormGroup, FormControl, Validators } from "@angular/forms";
+import { CookieService } from "ngx-cookie-service";
+import { isNullOrUndefined } from 'util';
 
 @Component({
   selector: "app-records-table",
   templateUrl: "./records-table.component.html",
+  providers: [CookieService],
   styleUrls: ["./records-table.component.scss"],
 })
-export class RecordsTableComponent implements OnInit, AfterViewInit {
+export class RecordsTableComponent implements OnInit, AfterViewInit, OnDestroy {
   public dataSource: RecordsDataSource;
   public displayedColumns: string[] = [
     "id",
@@ -22,13 +25,13 @@ export class RecordsTableComponent implements OnInit, AfterViewInit {
   ];
 
   public columnDefinitions = [
-    {def: "id", show:true},
-    {def: "name", show:true},
-    {def: "surname", show:true},
-    {def: "send_mail_at", show:true},
-    {def: "hash", show:true},
-    {def: "actions", show:true}
-  ]
+    { def: "id", show: true },
+    { def: "name", show: true },
+    { def: "surname", show: true },
+    { def: "send_mail_at", show: true },
+    { def: "hash", show: true },
+    { def: "actions", show: true },
+  ];
   public bEditMode: boolean = false;
   public bAddMode: boolean = false;
 
@@ -62,11 +65,16 @@ export class RecordsTableComponent implements OnInit, AfterViewInit {
     sendMailAtCreateField: new FormControl(new Date().toISOString()),
   });
 
-  constructor(private recordsService: RecordsService) {}
+  constructor(private recordsService: RecordsService, private cookieService: CookieService) {}
 
   ngOnInit(): void {
     this.dataSource = new RecordsDataSource(this.recordsService);
     this.dataSource.getAllRecords();
+    let savedColumnDefs =this.cookieService.get("column-defs");
+    if (!isNullOrUndefined(savedColumnDefs) && savedColumnDefs != "") {
+      this.columnDefinitions =  JSON.parse(savedColumnDefs);
+    }
+
   }
 
   ngAfterViewInit() {
@@ -78,10 +86,17 @@ export class RecordsTableComponent implements OnInit, AfterViewInit {
     });
   }
 
+  ngOnDestroy() {
+    this.cookieService.set("column-defs", JSON.stringify(this.columnDefinitions));
+    this.sort.sortChange.unsubscribe();
+  }
+
+  @HostListener('window:beforeunload', ['$event']) onBeforeUnload(event) {
+    this.cookieService.set("column-defs", JSON.stringify(this.columnDefinitions));
+  }
+
   public getDisplayedColumns(): string[] {
-    return this.columnDefinitions
-      .filter(cd => cd.show)
-      .map(cd => cd.def);
+    return this.columnDefinitions.filter((cd) => cd.show).map((cd) => cd.def);
   }
 
   public enableAddMode() {
@@ -153,6 +168,6 @@ export class RecordsTableComponent implements OnInit, AfterViewInit {
   }
 
   private showAllColumns() {
-    this.columnDefinitions.map(def => def.show = true);
+    this.columnDefinitions.map((def) => (def.show = true));
   }
 }
