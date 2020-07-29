@@ -1,11 +1,25 @@
-import { Component, OnInit, AfterViewInit, ViewChild, OnDestroy, HostListener } from "@angular/core";
+import {
+  Component,
+  OnInit,
+  AfterViewInit,
+  ViewChild,
+  OnDestroy,
+  HostListener,
+} from "@angular/core";
 import { RecordsService } from "src/app/services/records.service";
 import { RecordsDataSource } from "src/app/data-sources/records-datasource";
 import { Record } from "../../interfaces/record";
 import { MatSort } from "@angular/material/sort";
-import { FormGroup, FormControl, Validators } from "@angular/forms";
+import {
+  FormGroup,
+  FormControl,
+  Validators,
+  AbstractControl,
+  ValidatorFn,
+} from "@angular/forms";
 import { CookieService } from "ngx-cookie-service";
-import { isNullOrUndefined } from 'util';
+import { isNullOrUndefined } from "util";
+import { MatInput } from '@angular/material/input';
 
 @Component({
   selector: "app-records-table",
@@ -44,6 +58,7 @@ export class RecordsTableComponent implements OnInit, AfterViewInit, OnDestroy {
   private savedColumnsState;
 
   @ViewChild(MatSort) sort: MatSort;
+  @ViewChild("nameCreateInput") nameCreateInput;
 
   tableForm = new FormGroup({
     nameEditField: new FormControl("", [
@@ -62,19 +77,24 @@ export class RecordsTableComponent implements OnInit, AfterViewInit, OnDestroy {
       Validators.required,
       Validators.maxLength(32),
     ]),
-    sendMailAtCreateField: new FormControl(new Date().toISOString()),
+    sendMailAtCreateField: new FormControl(new Date().toISOString(), [
+      Validators.required,
+      this.sendMailAtValidator(),
+    ]),
   });
 
-  constructor(private recordsService: RecordsService, private cookieService: CookieService) {}
+  constructor(
+    private recordsService: RecordsService,
+    private cookieService: CookieService
+  ) {}
 
   ngOnInit(): void {
     this.dataSource = new RecordsDataSource(this.recordsService);
     this.dataSource.getAllRecords();
-    let savedColumnDefs =this.cookieService.get("column-defs");
+    let savedColumnDefs = this.cookieService.get("column-defs");
     if (!isNullOrUndefined(savedColumnDefs) && savedColumnDefs != "") {
-      this.columnDefinitions =  JSON.parse(savedColumnDefs);
+      this.columnDefinitions = JSON.parse(savedColumnDefs);
     }
-
   }
 
   ngAfterViewInit() {
@@ -87,12 +107,35 @@ export class RecordsTableComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.cookieService.set("column-defs", JSON.stringify(this.columnDefinitions));
+    this.cookieService.set(
+      "column-defs",
+      JSON.stringify(this.columnDefinitions)
+    );
     this.sort.sortChange.unsubscribe();
   }
 
-  @HostListener('window:beforeunload', ['$event']) onBeforeUnload(event) {
-    this.cookieService.set("column-defs", JSON.stringify(this.columnDefinitions));
+  @HostListener("window:beforeunload", ["$event"]) onBeforeUnload(event) {
+    this.cookieService.set(
+      "column-defs",
+      JSON.stringify(this.columnDefinitions)
+    );
+  }
+
+  private sendMailAtValidator(): ValidatorFn {
+    return (control: AbstractControl): { [key: string]: any } | null => {
+      if (isNullOrUndefined(control.value) || control.value === "") {
+        return null;
+      }
+      try {
+        let date = Date.parse(control.value);
+        if (!isNullOrUndefined(date) && !isNaN(date)) {
+          return null;
+        }
+      } catch {
+        return { invalidFormat: control.value };
+      }
+      return { invalidFormat: control.value };
+    };
   }
 
   public getDisplayedColumns(): string[] {
@@ -105,6 +148,9 @@ export class RecordsTableComponent implements OnInit, AfterViewInit, OnDestroy {
     this.showAllColumns();
     this.createRecord = { send_mail_at: new Date().toISOString() } as Record;
     this.dataSource.addCreationField(this.createRecord);
+    setTimeout(()=>{
+      this.scrollToCreateInputs();
+    });
   }
 
   public deleteRecord(recordId: number) {
@@ -169,5 +215,9 @@ export class RecordsTableComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private showAllColumns() {
     this.columnDefinitions.map((def) => (def.show = true));
+  }
+
+  private scrollToCreateInputs() {
+    this.nameCreateInput.nativeElement.scrollIntoView();
   }
 }

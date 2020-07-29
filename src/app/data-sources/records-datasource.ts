@@ -16,6 +16,7 @@ export class RecordsDataSource implements DataSource<Record> {
   private loadingSubject = new BehaviorSubject<boolean>(false);
   private savedState;
   public loading$ = this.loadingSubject.asObservable();
+  public error;
 
   constructor(private recordsService: RecordsService) {}
 
@@ -56,6 +57,7 @@ export class RecordsDataSource implements DataSource<Record> {
       )
       .subscribe((success) => {
         this.addRecordLocally(success["data"] as Record);
+      }, (error)=> {
       });
   }
 
