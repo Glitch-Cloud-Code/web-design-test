@@ -19,7 +19,6 @@ import {
 } from "@angular/forms";
 import { CookieService } from "ngx-cookie-service";
 import { isNullOrUndefined } from "util";
-import { MatInput } from '@angular/material/input';
 
 @Component({
   selector: "app-records-table",
@@ -29,14 +28,6 @@ import { MatInput } from '@angular/material/input';
 })
 export class RecordsTableComponent implements OnInit, AfterViewInit, OnDestroy {
   public dataSource: RecordsDataSource;
-  public displayedColumns: string[] = [
-    "id",
-    "name",
-    "surname",
-    "send_mail_at",
-    "hash",
-    "actions",
-  ];
 
   public columnDefinitions = [
     { def: "id", show: true },
@@ -60,7 +51,7 @@ export class RecordsTableComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild(MatSort) sort: MatSort;
   @ViewChild("nameCreateInput") nameCreateInput;
 
-  tableForm = new FormGroup({
+  public tableForm = new FormGroup({
     nameEditField: new FormControl("", [
       Validators.required,
       Validators.maxLength(32),

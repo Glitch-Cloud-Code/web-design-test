@@ -3,10 +3,9 @@ import {
   BehaviorSubject,
   of,
   Observable,
-  forkJoin,
   interval
 } from "rxjs";
-import { catchError, finalize, debounceTime, take} from "rxjs/operators";
+import { catchError, finalize, take} from "rxjs/operators";
 import { RecordsService } from "../services/records.service";
 import { CollectionViewer, DataSource } from "@angular/cdk/collections";
 
@@ -173,10 +172,6 @@ export class RecordsDataSource implements DataSource<Record> {
       result.push("surname");
     }
     return result;
-  }
-
-  private getLocalRecord(id: number) {
-    return this.recordsSubject.value.find((record) => record.id == id);
   }
 
   private getLocalRecordFromSavedState(id: number) {
