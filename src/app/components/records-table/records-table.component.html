@@ -1,3 +1,30 @@
+<div class="column-controls">
+  <mat-checkbox class="example-margin" [(ngModel)]="columnDefinitions[0].show" [disabled]="bAddMode || bEditMode">
+   ID
+  </mat-checkbox>
+</div>
+<div class="column-controls">
+  <mat-checkbox class="example-margin" [(ngModel)]="columnDefinitions[1].show" [disabled]="bAddMode || bEditMode">
+   Name
+  </mat-checkbox>
+</div>
+<div class="column-controls">
+  <mat-checkbox class="example-margin" [(ngModel)]="columnDefinitions[2].show" [disabled]="bAddMode || bEditMode">
+   Surname
+  </mat-checkbox>
+</div>
+<div class="column-controls">
+  <mat-checkbox class="example-margin" [(ngModel)]="columnDefinitions[3].show" [disabled]="bAddMode || bEditMode">
+   Send Mail At
+  </mat-checkbox>
+</div>
+<div class="column-controls">
+  <mat-checkbox class="example-margin" [(ngModel)]="columnDefinitions[4].show" [disabled]="bAddMode || bEditMode">
+   Hash
+  </mat-checkbox>
+</div>
+
+
 <form class="table-form">
   <table mat-table [dataSource]="dataSource" matSort matSortActive="id" matSortDirection="asc" matSortDisableClear
     class="mat-elevation-z8">
@@ -89,11 +116,11 @@
           <button mat-button (click)="cancelAdd()" color="warn">Cancel</button>
           <button mat-button (click)="confirmAdd()" color="primary"
             [disabled]="tableForm.controls['surnameCreateField'].errors ||  tableForm.controls['nameCreateField'].errors">Add</button>
-          </ng-container>
+        </ng-container>
       </td>
     </ng-container>
 
-    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    <tr mat-header-row *matHeaderRowDef="getDisplayedColumns()"></tr>
+    <tr mat-row *matRowDef="let row; columns: getDisplayedColumns()"></tr>
   </table>
 </form>

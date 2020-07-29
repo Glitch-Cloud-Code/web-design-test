@@ -20,6 +20,15 @@ export class RecordsTableComponent implements OnInit, AfterViewInit {
     "hash",
     "actions",
   ];
+
+  public columnDefinitions = [
+    {def: "id", show:true},
+    {def: "name", show:true},
+    {def: "surname", show:true},
+    {def: "send_mail_at", show:true},
+    {def: "hash", show:true},
+    {def: "actions", show:true}
+  ]
   public bEditMode: boolean = false;
   public bAddMode: boolean = false;
 
@@ -28,6 +37,8 @@ export class RecordsTableComponent implements OnInit, AfterViewInit {
   public editRecord: Record;
 
   public createRecord: Record = {} as Record;
+
+  private savedColumnsState;
 
   @ViewChild(MatSort) sort: MatSort;
 
@@ -67,8 +78,16 @@ export class RecordsTableComponent implements OnInit, AfterViewInit {
     });
   }
 
+  public getDisplayedColumns(): string[] {
+    return this.columnDefinitions
+      .filter(cd => cd.show)
+      .map(cd => cd.def);
+  }
+
   public enableAddMode() {
     this.bAddMode = true;
+    this.saveColumnsState();
+    this.showAllColumns();
     this.createRecord = { send_mail_at: new Date().toISOString() } as Record;
     this.dataSource.addCreationField(this.createRecord);
   }
@@ -79,6 +98,8 @@ export class RecordsTableComponent implements OnInit, AfterViewInit {
 
   public enableEditMode(record: Record) {
     this.bEditMode = true;
+    this.saveColumnsState();
+    this.showAllColumns();
     this.dataSource.saveCurrentState();
     this.editedRecordId = record.id;
     this.editRecord = record;
@@ -93,6 +114,7 @@ export class RecordsTableComponent implements OnInit, AfterViewInit {
     this.bEditMode = false;
     this.savedRecordState = null;
     this.editedRecordId = null;
+    this.loadSavedColumnsState();
   }
 
   public cancelEdit(record: Record) {
@@ -102,6 +124,7 @@ export class RecordsTableComponent implements OnInit, AfterViewInit {
     this.bEditMode = false;
     this.savedRecordState = null;
     this.editedRecordId = null;
+    this.loadSavedColumnsState();
   }
 
   public confirmAdd() {
@@ -110,6 +133,7 @@ export class RecordsTableComponent implements OnInit, AfterViewInit {
 
     this.bAddMode = false;
     this.createRecord = null;
+    this.loadSavedColumnsState();
   }
 
   public cancelAdd() {
@@ -117,5 +141,18 @@ export class RecordsTableComponent implements OnInit, AfterViewInit {
 
     this.bAddMode = false;
     this.createRecord = null;
+    this.loadSavedColumnsState();
+  }
+
+  private saveColumnsState() {
+    this.savedColumnsState = JSON.parse(JSON.stringify(this.columnDefinitions));
+  }
+
+  private loadSavedColumnsState() {
+    this.columnDefinitions = this.savedColumnsState;
+  }
+
+  private showAllColumns() {
+    this.columnDefinitions.map(def => def.show = true);
   }
 }
